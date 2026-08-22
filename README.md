@@ -7,7 +7,7 @@ Go 服务二阶段构建 Dockerfile 模板，面向**内网部署**场景：运�
 日常 Go 项目开发中，构建阶段（拉依赖、编译）一般没问题，但**运行时镜像**在内网环境很头疼：
 
 - 内网无法在线安装基础依赖（apk/apt 不可用）
-- 出问题时没有调试工具（curl、tcpdump、strace…）
+- 出问题时没有调试工具（curl、jq、vim…）
 - 改配置没有编辑器（vim、jq、yq…）
 
 本仓库的解法：**二阶段构建 + 预装工具的 base 镜像**。工具在构建阶段一次性装进 base 镜像，推送到内网 registry 后复用，运行时零安装。
@@ -15,7 +15,7 @@ Go 服务二阶段构建 Dockerfile 模板，面向**内网部署**场景：运�
 ## 特性
 
 - **二阶段构建**：builder 编译（`CGO_ENABLED=0` 静态编译）→ runtime 运行
-- **base 镜像预装工具**：网络调试、进程排查、编辑配置一应俱全
+- **base 镜像预装工具**：接口联调、进程查看、编辑配置，够用不臃肿
 - **毫秒镜像加速**：基础镜像默认走 `docker.1ms.run`，可一键切换阿里云/DaoCloud/内网 registry
 - **Go 模块代理**：默认 `goproxy.cn`，支持内网私有代理
 - **非 root 运行**：默认 `app` 用户，安全默认值
@@ -90,12 +90,12 @@ docker build --build-arg GOPROXY=http://goproxy.internal:3000 .
 
 | 类别 | 工具 |
 |------|------|
-| 网络调试 | curl, wget, netcat-openbsd, socat, tcpdump, dig(bind-tools), ss/ip(iproute2), openssl |
-| 进程/性能 | ps/top(procps), htop, strace |
-| 编辑/配置 | vim, jq, yq |
+| 接口联调 | curl, wget, jq, dig(bind-tools) |
+| 进程查看 | ps/top(procps) |
+| 编辑/配置 | vim, yq |
 | 基础 | bash, ca-certificates, tzdata |
 
-需要更多工具（git、lsof、nano 等）时，取消 base/Dockerfile 中对应注释行即可。
+需要更多工具（tcpdump、strace、netcat、htop 等）时，取消 base/Dockerfile 中对应注释行即可。
 
 ## 说明
 

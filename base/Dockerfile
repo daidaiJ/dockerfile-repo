@@ -21,32 +21,35 @@ FROM ${BASE_REGISTRY}/library/alpine:${ALPINE_VERSION}
 ENV TZ=Asia/Shanghai
 
 # 预装工具：构建时安装，运行时不依赖网络
+# 只保留接口联调/编辑配置的常用工具，网络层排查工具按需取消注释
 RUN apk add --no-cache \
         ca-certificates \
         tzdata \
-        # ---- 调试工具 ----
-        bash \
+        # ---- 接口联调 ----
         curl \
         wget \
-        netcat-openbsd \
-        socat \
-        tcpdump \
-        strace \
-        procps \
-        htop \
-        bind-tools \
-        iproute2 \
-        openssl \
-        # ---- 编辑 / 配置工具 ----
-        vim \
         jq \
+        bind-tools \
+        # ---- 进程查看 ----
+        procps \
+        # ---- 编辑 / 配置 ----
+        vim \
         yq \
+        # ---- 基础 ----
+        bash \
         # ---- 可选工具（按需取消注释）----
         # git \
         # lsof \
         # nano \
         # file \
         # tree \
+        # netcat-openbsd \
+        # socat \
+        # tcpdump \
+        # strace \
+        # htop \
+        # iproute2 \
+        # openssl \
     && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
     && echo "${TZ}" > /etc/timezone \
     && rm -rf /var/cache/apk/*
