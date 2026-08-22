@@ -4,7 +4,7 @@
 # Go 应用二阶段构建示例
 # ------------------------------------------------------------
 # Stage 1 编译（构建机有网，可拉依赖）
-# Stage 2 运行（内网 base 镜像，工具已预装）
+# Stage 2 运行：只拷贝二进制 + 项目配置到 base 镜像
 #
 # 构建：
 #   docker build -t myapp:1.0 \
@@ -51,14 +51,15 @@ FROM ${BASE_IMAGE} AS runtime
 
 ARG APP_NAME=app
 
+# 拷贝编译好的二进制
 COPY --from=builder /out/${APP_NAME} /usr/local/bin/${APP_NAME}
 
-# 配置文件（按需）
-# COPY configs/ /app/configs/
+# 拷贝项目配置（没有 configs/ 目录就删掉这行）
+COPY configs/ /app/configs/
 
-EXPOSE 8080
-
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget -qO- http://127.0.0.1:8080/healthz || exit 1
+# 按需启用：
+# EXPOSE 8080
+# HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+#     CMD wget -qO- http://127.0.0.1:8080/healthz || exit 1
 
 ENTRYPOINT ["/usr/local/bin/app"]

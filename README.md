@@ -28,7 +28,7 @@ dockerfile-repo/
 ├── base/
 │   └── Dockerfile        # 运行时 base 镜像：预装调试/编辑工具，构建一次推送到内网 registry
 ├── app/
-│   ├── Dockerfile        # 应用二阶段构建示例（builder + base）
+│   ├── Dockerfile        # 应用二阶段构建示例（builder 编译 + 拷贝二进制/配置到 base）
 │   └── .dockerignore
 ├── scripts/
 │   └── build.sh          # base 镜像构建/推送脚本
@@ -99,6 +99,7 @@ docker build --build-arg GOPROXY=http://goproxy.internal:3000 .
 
 ## 说明
 
+- **二阶段只拷贝**：Stage 2 只拷贝编译好的二进制和项目配置，运行环境（工具、时区、用户）全部由 base 镜像提供
 - **静态编译**：builder 阶段 `CGO_ENABLED=0`，产物不依赖 glibc，可直接运行在 alpine 上。
 - **非 root 运行**：base 默认 `USER app`；需要 root 调试时 `docker run --user root`。
 - **时区**：默认 `Asia/Shanghai`，按需修改 base/Dockerfile 中的 `TZ`。
