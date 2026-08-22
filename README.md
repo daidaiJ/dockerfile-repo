@@ -1,6 +1,25 @@
-# Go 二阶段构建 Dockerfile 模板
+# dockerfile-repo
 
-面向**内网部署**场景的 Go 服务 Dockerfile 模板：二阶段构建，运行层使用预装调试/编辑工具的 base 镜像，避免在运行时（内网）在线安装依赖。基础镜像默认走**毫秒镜像**（docker.1ms.run）加速拉取。
+Go 服务二阶段构建 Dockerfile 模板，面向**内网部署**场景：运行层使用预装调试/编辑工具的 base 镜像，避免在运行时（内网）在线安装依赖；基础镜像默认走**毫秒镜像**（docker.1ms.run）加速拉取。
+
+## 背景
+
+日常 Go 项目开发中，构建阶段（拉依赖、编译）一般没问题，但**运行时镜像**在内网环境很头疼：
+
+- 内网无法在线安装基础依赖（apk/apt 不可用）
+- 出问题时没有调试工具（curl、tcpdump、strace…）
+- 改配置没有编辑器（vim、jq、yq…）
+
+本仓库的解法：**二阶段构建 + 预装工具的 base 镜像**。工具在构建阶段一次性装进 base 镜像，推送到内网 registry 后复用，运行时零安装。
+
+## 特性
+
+- **二阶段构建**：builder 编译（`CGO_ENABLED=0` 静态编译）→ runtime 运行
+- **base 镜像预装工具**：网络调试、进程排查、编辑配置一应俱全
+- **毫秒镜像加速**：基础镜像默认走 `docker.1ms.run`，可一键切换阿里云/DaoCloud/内网 registry
+- **Go 模块代理**：默认 `goproxy.cn`，支持内网私有代理
+- **非 root 运行**：默认 `app` 用户，安全默认值
+- **可裁剪**：工具按需增减，生产精简版可直接换 distroless
 
 ## 目录结构
 
@@ -16,25 +35,25 @@ dockerfile-repo/
 └── README.md
 ```
 
-## 工作流
+## 快速开始
 
-1. **构建 base 镜像**（构建机有网，只需一次）：
+### 1. 构建 base 镜像（构建机有网，只需一次）
 
-   ```bash
-   docker build -t registry.example.com/base/go-runtime:1.0 ./base
-   docker push registry.example.com/base/go-runtime:1.0
-   ```
+```bash
+docker build -t registry.example.com/base/go-runtime:1.0 ./base
+docker push registry.example.com/base/go-runtime:1.0
+```
 
-2. **应用镜像**（内网构建机）：
+### 2. 应用镜像（内网构建机）
 
-   ```bash
-   docker build -t myapp:1.0 \
-     --build-arg BUILD_PATH=./cmd/server \
-     --build-arg VERSION=1.0.0 \
-     .
-   ```
+```bash
+docker build -t myapp:1.0 \
+  --build-arg BUILD_PATH=./cmd/server \
+  --build-arg VERSION=1.0.0 \
+  .
+```
 
-   应用 Dockerfile 的 Stage 2 直接 `FROM registry.example.com/base/go-runtime:1.0`，工具已内置，运行时无需任何安装。
+应用 Dockerfile 的 Stage 2 直接 `FROM registry.example.com/base/go-runtime:1.0`，工具已内置，运行时无需任何安装。
 
 ## 镜像源配置
 
